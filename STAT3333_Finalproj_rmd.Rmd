@@ -6,6 +6,18 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+##                              Technology Useage & Stress Wellness
+
+For our project, we plan on analyzing the “Tech Use & Stress Wellness” dataset from 
+Kaggle. We want to see how tech usage can affect stress/wellness 
+levels among different groups (including but not limited to different age groups, genders, and 
+locations).
+
+```{r}
+data <- read.csv("Tech_Use_Stress_Wellness.csv")
+View(data)
 ```
 
