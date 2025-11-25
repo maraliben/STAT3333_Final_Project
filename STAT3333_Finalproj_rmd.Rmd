@@ -7,6 +7,9 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
 ```
 
 ##                              Technology Useage & Stress Wellness
@@ -18,6 +21,47 @@ locations).
 
 ```{r}
 data <- read.csv("Tech_Use_Stress_Wellness.csv")
-View(data)
+#View(data)
+#str(data)
+# Daily screen time by gender
+ggplot(data, aes(x = daily_screen_time_hours, fill = gender)) + labs(title = "Daily Screen Time per Gender", x = "Daily Screen Time (hours)", y = "Count per Gender" ) + geom_histogram() + theme_minimal()
+
+# Correlation between daily screen time and stress level
+ggplot(data, aes(x = daily_screen_time_hours, y = stress_level, color = gender)) +
+  geom_point(alpha = 0.6) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Screen Time vs Stress by Gender",
+       x = "Daily Screen Time (hours)",
+       y = "Stress Level") + theme_minimal()
+# Wellness
+ggplot(data, aes(x = daily_screen_time_hours, y = mental_health_score)) +
+  geom_point(alpha = 0.6, color = "steelblue", size = 2) +   # softer points
+  geom_smooth(method = "lm", se = TRUE, color = "darkred", linetype = "dashed", size = 1.2) +
+  labs(
+    title = "Daily Screen Time vs Mental Health Score",
+    x = "Daily Screen Time (hours)",
+    y = "Mental Health Score") + theme_minimal() 
+
+# Summary statistics
+data %>%
+  group_by(gender) %>%
+  summarise(mean_stress = mean(stress_level, na.rm = TRUE),
+            mean_wellness = mean(mental_health_score, na.rm = TRUE))
+data %>%
+  group_by(location_type) %>%
+  summarise(mean_stress = mean(stress_level, na.rm = TRUE),
+            mean_wellness = mean(mental_health_score, na.rm = TRUE))
+data %>%
+  group_by(age) %>%
+  summarise(mean_stress = mean(stress_level, na.rm = TRUE),
+            mean_wellness = mean(mental_health_score, na.rm = TRUE))
+# Mean daily screen time by location type
+data %>%
+  group_by(location_type) %>%
+  summarise(mean_screen_time = mean(daily_screen_time_hours, na.rm = TRUE))
+```
+```{r}
+
+
 ```
 
