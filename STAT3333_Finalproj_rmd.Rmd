@@ -76,9 +76,11 @@ data %>%
   group_by(location_type) %>%
   summarise(mean_screen_time = mean(daily_screen_time_hours, na.rm = TRUE))
 ```
+
+
 ```{r}
 # Compare CI for stress levels across gender/age groups.
-# Bootstrap CI for mean stress level
+# Bootstrap CI for mean stress level using ggpltot2 and infer package
 boot_dist <- data %>%
   specify(response = stress_level) %>%
   generate(reps = 1000, type = "bootstrap") %>%
@@ -87,6 +89,32 @@ boot_dist <- data %>%
 boot_ci <- boot_dist %>%
   get_ci(level = 0.95, type = "percentile")
 boot_ci
+
+# Manual Bootstrap for mean stress level from Chap05Bootstrap.Rmd Chihara, L., & Hesterberg, T. (2019). Mathematical Statistics with Resampling and R.
+x <- data$stress_level
+n <- length(data)
+N <-  10^4
+
+data.mean<-numeric(N)
+#set.seed(2025)
+for (i in 1:N)
+{
+   boot_sample <- sample(x, n, replace = TRUE)
+   data.mean[i] <- mean(boot_sample)
+}
+
+# Check normality
+hist(data.mean, main = "Bootstrap distribution of means")
+abline(v = mean(data.mean), col = "blue", lty = 2)
+qqnorm(data.mean)
+qqline(data.mean)
+
+#bootstrap mean
+mean(data.mean) 
+#bootstrap standard error or std dev of the boot means
+sd(data.mean) 
+# 95% boot percentile CI
+quantile(data.mean, c(0.025, 0.975)) 
 
 ```
 
@@ -132,15 +160,16 @@ ggplot(data, aes(x = age_group, y = stress_level)) +
 ```
 
 ```{r}
-# Chi-square test for independence between stress level (high/low) and physical activity (high/low)
-chisq.test(table(data$mood_rating, data$sleep_quality))
+# Chi-square test for independence of mood and sleep quality
+tab <- table(data$mood_rating, data$sleep_quality)
+chisq.test(tab)
 ```
 
 Conclusion
 • 	Stress levels vary across demographic groups.
 • 	Screen time shows a measurable correlation with mental health scores.
 • 	ANOVA suggests differences in stress across age groups.
-• 	Independence tests reveal relationships between categorical wellness factors.
+• 	Independence tests reveal relationships between mood and sleep quality.
 
 References
 • 	Kaggle Dataset: Tech Use & Stress Wellness
