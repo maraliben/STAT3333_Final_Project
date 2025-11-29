@@ -12,6 +12,8 @@ library(ggplot2)
 library(dplyr)
 library(broom)
 library(infer)   # for permutation/bootstrap tests
+library(patchwork)   # for side-by-side plots
+library(testequavar)
 ```
 
 ##                              Technology Useage & Stress Wellness
@@ -31,7 +33,8 @@ data <- read.csv("Tech_Use_Stress_Wellness.csv")
 # Exploratory Data Analysis
 #View(data)
 #str(data)
-summary(data)
+#glimpse(data)
+#summary(data)
 ggplot(data, aes(x = daily_screen_time_hours)) +
   geom_histogram(binwidth = 1, fill = "steelblue", color = "white") +
   labs(title = "Distribution of Daily Screen Time")
@@ -80,7 +83,7 @@ data %>%
 
 ```{r}
 # Compare CI for stress levels across gender/age groups.
-# Bootstrap CI for mean stress level using ggpltot2 and infer package
+# CI for mean stress level using ggpltot2 and infer package
 boot_dist <- data %>%
   specify(response = stress_level) %>%
   generate(reps = 1000, type = "bootstrap") %>%
@@ -92,7 +95,7 @@ boot_ci
 
 # Manual Bootstrap for mean stress level from Chap05Bootstrap.Rmd Chihara, L., & Hesterberg, T. (2019). Mathematical Statistics with Resampling and R.
 x <- data$stress_level
-n <- length(data)
+n <- length(x)
 N <-  10^4
 
 data.mean<-numeric(N)
@@ -120,8 +123,8 @@ quantile(data.mean, c(0.025, 0.975))
 
 ```{r}
 # Hypothesis test
-# Example: Is mean stress > 50?
-t.test(data$stress_level, mu = 50)
+# Example: Is mean stress > 8?
+t.test(data$stress_level, mu = 8, alternative = "greater")
 
 # Compare stress by gender standard t.test insufficient due to 3 factors - use pairwise t.test
 pairwise.t.test(data$stress_level, data$gender, p.adjust.method = "bonferroni")
@@ -147,30 +150,150 @@ ggplot(data, aes(x = daily_screen_time_hours, y = stress_level)) +
 # ANOVA: stress by age group
 data$age_group <- cut(
   data$age,
-  breaks = c(0, 25, 40, 60, 80, 100),   # adjust ranges as needed
+  breaks = c(0, 25, 40, 60, 80, 100),
   labels = c("≤25", "26-40", "41-60", "61-80", "81+"),
   right = TRUE
 )
-anova_result <- aov(stress_level ~ age_group, data = data)
-summary(anova_result)
-TukeyHSD(anova_result)
-ggplot(data, aes(x = age_group, y = stress_level)) +
+
+anova_age <- aov(stress_level ~ age_group, data = data)
+summary(anova_age)
+
+# Diagnostics: Q-Q plot
+plot(anova_age, which = 2)
+
+# Permutation ANOVA for robustness
+set.seed(2025)
+observed <- anova(lm(stress_level ~ age_group, data = data))$`F value`[1]
+N <- 1000
+results <- numeric(N)
+for (i in 1:N) {
+  index <- sample(seq_along(data$stress_level))
+  stress_perm <- data$stress_level[index]
+  results[i] <- anova(lm(stress_perm ~ age_group, data = data))$`F value`[1]
+}
+perm_p <- (sum(results >= observed) + 1) / (N + 1)
+perm_p
+
+# Post-hoc Tukey HSD
+TukeyHSD(anova_age)
+
+# Plots side by side
+p1 <- ggplot(data, aes(x = age_group, y = stress_level)) +
   geom_boxplot(fill = "lightblue") +
-  labs(title = "Stress Level by Age Group")
+  labs(title = "Stress Level by Age Group") + theme_minimal()
+
+p2 <- ggplot(data, aes(x = age_group, y = daily_screen_time_hours)) +
+  geom_jitter(width = 0.2, alpha = 0.5, color = "darkgreen") +
+  labs(title = "Daily Screen Time by Age Group") + theme_minimal()
+
+p1 + p2
 ```
+Stress by Age Group\
+A one-way ANOVA was conducted to examine differences in stress levels across age groups. One group (81+) had no observations, so the analysis effectively compared four age groups (≤25, 26–40, 41–60, 61–80). The ANOVA indicated a strong overall effect of age group on stress, F(3, 4996) = 576.8, p < 0.001.\
+Tukey post-hoc comparisons showed that the youngest group (≤25) reported substantially higher mean stress than all older groups (differences ≈ 3–4.4 units on the stress scale, all p < 0.001). Stress decreased with age: 26–40 had lower stress than ≤25, 41–60 lower than 26–40, and 61–80 had the lowest stress levels overall.\
+A permutation ANOVA yielded a very small p-value (≈ 0.001), consistent with the classical ANOVA and reinforcing that age-related differences in stress are highly unlikely to be due to chance. Visualizations of stress and daily screen time by age group suggested that younger adults both reported higher screen time and higher stress, pointing to a potential link between intensive tech use and stress in younger participants.\
+
+```{r}
+# ANOVA: stress by location type
+anova_loc <- aov(stress_level ~ location_type, data = data)
+summary(anova_loc)
+
+# Diagnostics
+plot(anova_loc, which = 2)
+
+# Permutation ANOVA
+set.seed(2025)
+observed <- anova(lm(stress_level ~ location_type, data = data))$`F value`[1]
+N <- 1000
+results <- numeric(N)
+for (i in 1:N) {
+  index <- sample(seq_along(data$stress_level))
+  stress_perm <- data$stress_level[index]
+  results[i] <- anova(lm(stress_perm ~ location_type, data = data))$`F value`[1]
+}
+perm_p <- (sum(results >= observed) + 1) / (N + 1)
+perm_p
+
+# Post-hoc Tukey HSD
+TukeyHSD(anova_loc)
+
+# Plots side by side
+p3 <- ggplot(data, aes(x = location_type, y = stress_level)) +
+  geom_boxplot(fill = "lightblue") +
+  labs(title = "Stress Level by Location") + theme_minimal()
+
+p4 <- ggplot(data, aes(x = location_type, y = daily_screen_time_hours)) +
+  geom_jitter(width = 0.2, alpha = 0.5, color = "darkgreen") +
+  labs(title = "Daily Screen Time by Location") + theme_minimal()
+
+p3 + p4
+```
+Stress by Location Type\
+A one-way ANOVA compared mean stress levels across location types (Urban, Suburban, Rural). The overall effect of location was not statistically significant, F(2, 4997) = 2.27, p = 0.10. A permutation ANOVA produced a similar p-value (≈ 0.13), indicating that any observed differences in mean stress by location could plausibly be due to random variation.\
+Tukey post-hoc comparisons showed that the estimated mean stress in urban areas was slightly higher than in rural and suburban areas, but all confidence intervals included zero and all adjusted p-values exceeded 0.10, so no pairwise differences met conventional significance thresholds.\
+Boxplots and jittered scatterplots suggest a small trend toward higher stress and higher screen time in urban participants, but given the non-significant test results, these patterns should be interpreted cautiously as suggestive rather than conclusive.\
 
 ```{r}
 # Chi-square test for independence of mood and sleep quality
 tab <- table(data$mood_rating, data$sleep_quality)
 chisq.test(tab)
-```
+chi <- chisq.test(tab)
+#chi$stdres
+# Identify cells with large standardized residuals
+thr <- 3
+idx <- which(chi$stdres > thr, arr.ind = TRUE)
 
-Conclusion
-• 	Stress levels vary across demographic groups.
-• 	Screen time shows a measurable correlation with mental health scores.
-• 	ANOVA suggests differences in stress across age groups.
-• 	Independence tests reveal relationships between mood and sleep quality.
+cbind(
+  mood_rating  = rownames(chi$stdres)[idx[,"row"]],
+  sleep_quality = colnames(chi$stdres)[idx[,"col"]],
+  std_residual = chi$stdres[idx]
+)
+
+```
+Independence of Mood and Sleep Quality\
+A chi‑square test of independence was performed to assess the relationship between mood ratings and sleep quality. Results indicated a statistically significant association, suggesting that individuals with poorer sleep quality tended to report lower mood ratings.\
+
+```{r}
+# Bootstrap CI for mean stress level
+# Manual bootstrap from Chap05Bootstrap.Rmd
+x <- data$stress_level
+n <- length(x)
+N <- 1000
+data.mean <- numeric(N)
+
+for (i in 1:N) {
+  boot_sample <- sample(x, n, replace = TRUE)
+  data.mean[i] <- mean(boot_sample)
+}
+
+mean(data.mean)
+sd(data.mean)
+quantile(data.mean, c(0.025, 0.975))
+
+# Compare to parametric t-CI
+t.test(x)$conf.int
+```
+Bootstrap vs Parametric Confidence Intervals\
+To evaluate robustness of mean stress estimates, both parametric t‑based confidence intervals and bootstrap percentile intervals were computed. The parametric 95% CI for mean stress was narrow and centered around the sample mean. The bootstrap percentile CI closely matched, with only minor differences in bounds. This agreement suggests that parametric assumptions were reasonable in this dataset, but the bootstrap method provided reassurance that conclusions remain valid even under potential non‑normality or outliers.\
+Together, these analyses demonstrate that stress levels vary meaningfully across demographic groups, that mood and sleep are interrelated, and that bootstrap methods can validate parametric inference.\
+
+Conclusion\
+This study examined the relationship between technology use and wellness outcomes using ANOVA, chi-square tests, and bootstrap methods. Results showed that stress levels differ significantly across age groups, with the youngest participants (≤25) reporting the highest mean stress and stress levels decreasing across older age groups. In contrast, we did not find strong statistical evidence that stress differs by location type (Urban, Suburban, Rural), although urban participants showed a small, non-significant trend toward higher stress and screen time.\
+Mood and sleep quality were strongly associated, indicating that individuals’ wellness indicators are interrelated rather than independent. Bootstrap analyses of the mean stress level produced confidence intervals that closely matched parametric t-based intervals, suggesting that the parametric results are reasonably robust for this dataset.\
+Overall, these findings support the idea that demographic factors—particularly age—are linked to stress and wellness outcomes in the context of technology use, while environmental context (location type) showed at most weak trends that warrant further investigation rather than firm conclusions.\
+
+Insights:\
+• Stress varies substantially across age, with younger adults (≤25) reporting the highest levels and older groups reporting lower stress.\
+• Mood and sleep quality are strongly associated, consistent with the idea that sleep and emotional wellbeing are intertwined.\
+• Bootstrap methods produced confidence intervals that closely matched parametric t-intervals, increasing confidence in the stability of the stress estimates.\
+
+Limitations:\
+• 	Data are self‑reported, which may introduce bias or measurement error.\
+• 	The study is observational, limiting causal inference.\
+• 	Unequal group sizes and potential confounders (e.g., occupation, health status) may influence results.\
+
 
 References
-• 	Kaggle Dataset: Tech Use & Stress Wellness
-• 	Chihara, L., & Hesterberg, T. (2019). Mathematical Statistics with Resampling and R.
+• 	Kaggle Dataset: Tech Use & Stress Wellness.\
+• 	Chihara, L., & Hesterberg, T. (2019). Mathematical Statistics with Resampling and R.\
+• 	American Psychological Association (2017). Stress in America: Coping with Change Stress in America™ Survey.\
