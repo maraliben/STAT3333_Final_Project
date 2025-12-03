@@ -18,13 +18,27 @@ library(testequavar)
 
 ##                              Technology Useage & Stress Wellness
 
+**Abstract**\
+As technology advances and society’s dependence on it deepens, there is growing worry that excessive use of technology can negatively impact users’ stress levels. In fact, the American Psychological Association found that high attachment levels to devices and the constant use of technology is associated with higher stress levels, and about a fifth of Americans identify the use of technology as a significant source of stress (American Psychological Association, 2017). As such, looking at the relationship between technology usage and stress can be extremely important in understanding how technology can negatively impact stress levels for its users. \
+\
+**Problem**\
+As stated previously, it has been found that technology usage can negatively affect stress levels for its users. Multiple factors other than technology can also influence stress and wellness, including but not limited to age, gender, and physical activity levels (Idrees, Blal et al). Understanding what factors affect stress levels can help mitigate or control stress levels and improve personal wellness.\
+\
+**Purpose**\
+The purpose of this project is to determine if stress levels differ significantly by gender or age group, if screen time is correlated with mental health scores, if stress and physical activity are independent, and if regression models can predict stress levels based on tech use. Understanding how tech use impacts wellness can inform healthier digital habits and public health strategies. \
+\
+**The Dataset**\
+The dataset used in this project was sourced from Kaggle and was made available on Kaggle by Nagpal Prabhavalkar. The dataset contains information on 5,000 participants and 25 variables. The variables are as follows: the user id of the participant, the age of the participant, the participant’s gender, daily screen time (in hours), daily phone usage (in hours), daily laptop usage (in hours), daily tablet usage (in hours), daily tv usage (in hours), daily social media usage (in hours), daily work related technology usage (in hours), entertainment hours, gaming hours, sleep duration (in hours), sleep quality (rated on a scale of 1 to 5), mood rating (rated on a scale of 1 to 10), stress level (rated on a scale of 1 to 10), physical activity (in hours per week), location type (rated as rural, suburban, or urban), mental health score (rated on a scale of 1 to 100), if the participant uses wellness apps (true or false), if the participant eats healthy (true or false), caffeine intake (in milligrams per day), weekly anxiety score (rated from 0 to 20), weekly depression score (from 0 to 20) and the participant’s mindfulness score (in minutes per day).\
+\
+The variables that will be focused on in this project will be gender, age, daily screen time, stress level, mental health score, physical activity, mood rating, sleep quality, and location type. It is important to note that categories like stress level, mental health score, mood rating, and sleep quality are subjective, and there may not be consistency in how participants answer or respond to these categories.\
+
 This project analyzes the relationship between technology usage (daily screen time, phone usage) and wellness outcomes (stress level, mental health score, sleep quality).
-We investigate differences across age groups, genders, and location types.
-Research Questions:
-• 	Do stress levels differ significantly by gender or age group?
-• 	Is screen time correlated with mental health scores?
-• 	Are stress and physical activity independent?
-• 	Can regression models predict stress from tech use?
+We investigate differences across age groups, genders, and location types.\
+Research Questions:\
+• 	Do stress levels differ significantly by gender or age group?\
+• 	Is screen time correlated with mental health scores?\
+• 	Are stress and physical activity independent?\
+• 	Can regression models predict stress from tech use?\
 Relevance: Understanding how tech use impacts wellness can inform healthier digital habits and public health strategies.
 
 ```{r}
