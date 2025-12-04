@@ -66,6 +66,23 @@ ggplot(data, aes(x = daily_screen_time_hours, y = stress_level, color = gender))
   labs(title = "Screen Time vs Stress by Gender",
        x = "Daily Screen Time (hours)",
        y = "Stress Level") + theme_minimal()
+
+# Distribution of Screen Time and Physical Activity
+ggplot(data, aes(x = daily_screen_time_hours)) +
+  geom_histogram(binwidth = 1, fill = "steelblue", color = "white") +
+  labs(title = "Distribution of Daily Screen Time",
+       x = "Daily Screen Time (hours)",
+       y = "Count") +
+  theme_minimal()
+
+ggplot(data, aes(x = physical_activity_hours_per_week)) +
+  geom_histogram(binwidth = 1, fill = "darkgreen", color = "white") +
+  labs(title = "Distribution of Weekly Physical Activity",
+       x = "Physical Activity (hours per week)",
+       y = "Count") +
+  theme_minimal()
+
+
 # Wellness
 ggplot(data, aes(x = daily_screen_time_hours, y = mental_health_score)) +
   geom_point(alpha = 0.6, color = "steelblue", size = 2) +   # softer points
@@ -74,6 +91,8 @@ ggplot(data, aes(x = daily_screen_time_hours, y = mental_health_score)) +
     title = "Daily Screen Time vs Mental Health Score",
     x = "Daily Screen Time (hours)",
     y = "Mental Health Score") + theme_minimal() 
+
+
 
 # Summary statistics
 data %>%
@@ -145,6 +164,34 @@ pairwise.t.test(data$stress_level, data$gender, p.adjust.method = "bonferroni")
 ```
 
 ```{r}
+# Correlation matrix for key numeric variables
+numeric_vars <- data %>%
+  select(stress_level,
+         daily_screen_time_hours,
+         mental_health_score,
+         physical_activity_hours_per_week)
+
+cor_matrix <- cor(numeric_vars, use = "complete.obs")
+
+cor_matrix
+
+# One-sample CI and hypothesis test for mean stress level
+mean_stress <- mean(data$stress_level, na.rm = TRUE)
+sd_stress   <- sd(data$stress_level, na.rm = TRUE)
+n_stress    <- sum(!is.na(data$stress_level))
+
+# 95% CI for population mean stress
+se_stress <- sd_stress / sqrt(n_stress)
+lower_ci  <- mean_stress - 1.96 * se_stress
+upper_ci  <- mean_stress + 1.96 * se_stress
+c(lower_ci = lower_ci, upper_ci = upper_ci)
+
+# One-sample t-test: is mean stress > 5?
+t.test(data$stress_level, mu = 5, alternative = "greater")
+
+```
+
+```{r}
 # Correlation between activity and stress
 cor.test(data$physical_activity, data$stress_level)
 
@@ -157,6 +204,37 @@ ggplot(data, aes(x = daily_screen_time_hours, y = stress_level)) +
   geom_point(alpha = 0.6, color = "steelblue") +
   geom_smooth(method = "lm", se = TRUE, color = "darkred", linetype = "dashed") +
   labs(title = "Screen Time vs Stress Level")+ theme_minimal()
+
+```
+
+```{r}
+# Simple linear regression: mental health ~ screen time
+lm_mh_screen <- lm(mental_health_score ~ daily_screen_time_hours, data = data)
+summary(lm_mh_screen)
+
+# 95% CI for the screen-time slope
+confint(lm_mh_screen, parm = "daily_screen_time_hours", level = 0.95)
+
+```
+
+```{r}
+# Simple linear regression: stress ~ physical activity
+lm_stress_activity <- lm(stress_level ~ physical_activity_hours_per_week, data = data)
+summary(lm_stress_activity)
+
+# 95% CI for the physical-activity slope
+confint(lm_stress_activity,
+        parm = "physical_activity_hours_per_week",
+        level = 0.95)
+```
+
+```{r}
+# Simple linear regression: stress ~ mental health score
+lm_stress_mh <- lm(stress_level ~ mental_health_score, data = data)
+summary(lm_stress_mh)
+
+# 95% CI for the slope (effect of mental health on stress)
+confint(lm_stress_mh, parm = "mental_health_score", level = 0.95)
 
 ```
 
@@ -202,6 +280,7 @@ p2 <- ggplot(data, aes(x = age_group, y = daily_screen_time_hours)) +
 
 p1 + p2
 ```
+
 Stress by Age Group\
 A one-way ANOVA was conducted to examine differences in stress levels across age groups. One group (81+) had no observations, so the analysis effectively compared four age groups (≤25, 26–40, 41–60, 61–80). The ANOVA indicated a strong overall effect of age group on stress, F(3, 4996) = 576.8, p < 0.001.\
 Tukey post-hoc comparisons showed that the youngest group (≤25) reported substantially higher mean stress than all older groups (differences ≈ 3–4.4 units on the stress scale, all p < 0.001). Stress decreased with age: 26–40 had lower stress than ≤25, 41–60 lower than 26–40, and 61–80 had the lowest stress levels overall.\
