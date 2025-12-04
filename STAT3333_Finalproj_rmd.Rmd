@@ -262,10 +262,40 @@ cbind(
   sleep_quality = colnames(chi$stdres)[idx[,"col"]],
   std_residual = chi$stdres[idx]
 )
-
 ```
+
+```{r}
+# Bin mood ratings into categories
+data$mood_cat <- cut(data$mood_rating,
+                     breaks = c(0, 3, 7, 10),
+                     labels = c("Low", "Medium", "High"),
+                     include.lowest = TRUE)
+
+# Drop rows with missing values
+clean_df <- na.omit(data[, c("mood_cat", "sleep_quality")])
+
+# Force both variables to be factors with explicit levels
+clean_df$mood_cat <- factor(clean_df$mood_cat,
+                            levels = c("Low", "Medium", "High"))
+
+clean_df$sleep_quality <- factor(clean_df$sleep_quality,
+                                 levels = c("1","2","3","4","5"))
+
+# Build contingency table
+tab <- table(clean_df$mood_cat, clean_df$sleep_quality)
+
+library(knitr)
+
+# Convert to data frame for kable
+df_tab <- as.data.frame.matrix(tab)
+
+# Create kable
+kable(df_tab, caption = "Contingency Table of Mood Category by Sleep Quality",
+      align = "c")
+```
+
 Independence of Mood and Sleep Quality\
-A chi‑square test of independence was performed to assess the relationship between mood ratings and sleep quality. Results indicated a statistically significant association, suggesting that individuals with poorer sleep quality tended to report lower mood ratings.\
+A chi‑square test of independence was performed to assess the relationship between mood ratings and sleep quality. Results indicated a statistically significant association, suggesting that individuals with poorer sleep quality tended to report lower mood ratings. Standardized residuals revealed that the strongest contributions to the chi-square statistic came from participants with very low mood ratings (≈1–2) combined with poor sleep quality (ratings of 1–3), where residuals exceeded thresholds of 9–14. This suggests that individuals reporting poor sleep were disproportionately likely to also report very low mood. Conversely, participants with high mood ratings (≈7.5–10) paired with excellent sleep quality (rating = 5) also showed large positive residuals (≈3–7.5), indicating that good sleep was strongly associated with higher mood scores.\
 
 ```{r}
 # Bootstrap CI for mean stress level
@@ -288,13 +318,11 @@ quantile(data.mean, c(0.025, 0.975))
 t.test(x)$conf.int
 ```
 Bootstrap vs Parametric Confidence Intervals\
-To evaluate robustness of mean stress estimates, both parametric t‑based confidence intervals and bootstrap percentile intervals were computed. The parametric 95% CI for mean stress was narrow and centered around the sample mean. The bootstrap percentile CI closely matched, with only minor differences in bounds. This agreement suggests that parametric assumptions were reasonable in this dataset, but the bootstrap method provided reassurance that conclusions remain valid even under potential non‑normality or outliers.\
-Together, these analyses demonstrate that stress levels vary meaningfully across demographic groups, that mood and sleep are interrelated, and that bootstrap methods can validate parametric inference.\
+To evaluate robustness of mean stress estimates, both parametric t‑based confidence intervals and bootstrap percentile intervals were computed. The parametric 95% CI for mean stress was narrow and centered around the sample mean. The bootstrap percentile CI closely matched, with only minor differences in bounds. This agreement suggests that parametric assumptions were reasonable in this dataset, but the bootstrap method provided reassurance that conclusions remain valid even under potential non‑normality or outliers. Together, these analyses demonstrate that stress levels vary meaningfully across demographic groups, that mood and sleep are interrelated, and that bootstrap methods can validate parametric inference.\
 
 Conclusion\
-This study examined the relationship between technology use and wellness outcomes using ANOVA, chi-square tests, and bootstrap methods. Results showed that stress levels differ significantly across age groups, with the youngest participants (≤25) reporting the highest mean stress and stress levels decreasing across older age groups. In contrast, we did not find strong statistical evidence that stress differs by location type (Urban, Suburban, Rural), although urban participants showed a small, non-significant trend toward higher stress and screen time.\
-Mood and sleep quality were strongly associated, indicating that individuals’ wellness indicators are interrelated rather than independent. Bootstrap analyses of the mean stress level produced confidence intervals that closely matched parametric t-based intervals, suggesting that the parametric results are reasonably robust for this dataset.\
-Overall, these findings support the idea that demographic factors—particularly age—are linked to stress and wellness outcomes in the context of technology use, while environmental context (location type) showed at most weak trends that warrant further investigation rather than firm conclusions.\
+This study investigated how technology use relates to stress and broader wellness outcomes through ANOVA, chi-square tests, correlation, regression, and bootstrap methods. Consistent with prior concerns about technology and stress, we found that stress levels differed significantly across age groups, with younger participants (≤25) reporting the highest stress and stress decreasing steadily with age. Gender differences were minimal, and location type (Urban, Suburban, Rural) showed no statistically significant effects, though urban participants displayed a small, non-significant trend toward higher stress and screen time.
+Regression analyses demonstrated that daily screen time was a strong positive predictor of stress, while physical activity was strongly negatively correlated with stress, underscoring the role of lifestyle factors in wellness. Mood and sleep quality were also closely linked: chi-square tests revealed that poor sleep was disproportionately associated with very low mood, while excellent sleep aligned with high mood ratings. Bootstrap confidence intervals for mean stress closely matched parametric t-based intervals, reinforcing the robustness of the findings. Overall, these results support the abstract’s premise that technology use can negatively impact stress and wellness, particularly among younger adults, while also showing that wellness indicators such as sleep, mood, and physical activity are interrelated. The findings suggest that healthier digital habits, combined with lifestyle interventions, may help mitigate stress and promote better overall wellness.\
 
 Insights:\
 • Stress varies substantially across age, with younger adults (≤25) reporting the highest levels and older groups reporting lower stress.\
